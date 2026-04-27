@@ -1,349 +1,420 @@
-import React, { useState, useMemo } from 'react';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell, LineChart, Line
-} from 'recharts';
-import { LayoutDashboard, Users, AlertCircle, Calendar, FileText, TrendingUp, CheckCircle } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 교칙위반 통계 분석 대시보드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .tab-active { border-bottom: 2px solid #2563eb; color: #2563eb; }
+        .chart-container { position: relative; height: 300px; width: 100%; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen">
 
-const App = () => {
-  const [activeTab, setActiveTab] = useState('summary');
-  const [selectedClass, setSelectedClass] = useState('1-1');
+    <div class="max-w-6xl mx-auto p-4 md:p-8">
+        <!-- Header -->
+        <header class="mb-8">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-black flex items-center gap-2">
+                        <i data-lucide="file-text" class="text-blue-600"></i>
+                        2026학년도 1학기 교칙위반 통계 분석
+                    </h1>
+                    <p class="text-gray-500 mt-1">1학년 1반 ~ 7반 통합 장부 분석 결과</p>
+                </div>
+                <div>
+                    <span id="total-count-badge" class="bg-red-50 text-red-600 px-4 py-2 rounded-full text-sm font-bold border border-red-100 shadow-sm">
+                        총 위반 건수: 40건
+                    </span>
+                </div>
+            </div>
+        </header>
 
-  // 업로드된 파일의 실제 데이터를 기반으로 구성한 상세 통계 데이터
-  const statsData = {
-    classes: [
-      { 
-        id: '1-1', name: '1학년 1반', total: 4, 
-        types: { '지각': 2, '화장': 1, '복장': 1 },
-        details: [
-          { name: '김예원', count: 1, detail: '3.31/지' },
-          { name: '김예주', count: 1, detail: '3.16/화' },
-          { name: '백소연(부)', count: 1, detail: '4.9/지' },
-          { name: '양윤정', count: 1, detail: '4.3/복' }
-        ]
-      },
-      { 
-        id: '1-2', name: '1학년 2반', total: 11, 
-        types: { '지각': 5, '복장': 6, '화장': 0 },
-        details: [
-          { name: '김민지', count: 1, detail: '4.7/복' },
-          { name: '김서진', count: 5, detail: '3.19/복, 3.23/복, 3.26/지, 4.1/복, 4.7/복' },
-          { name: '김은재', count: 1, detail: '3.25/지' },
-          { name: '민하은', count: 1, detail: '3.26/지' },
-          { name: '안채현(부)', count: 1, detail: '4.1/지' },
-          { name: '유지향', count: 2, detail: '3.27/지, 3.31/지' }
-        ]
-      },
-      { 
-        id: '1-3', name: '1학년 3반', total: 1, 
-        types: { '지각': 1, '복장': 0, '화장': 0 },
-        details: [
-          { name: '최정원', count: 1, detail: '4.14/지' }
-        ]
-      },
-      { 
-        id: '1-4', name: '1학년 4반', total: 0, 
-        types: { '지각': 0, '복장': 0, '화장': 0 },
-        details: []
-      },
-      { 
-        id: '1-5', name: '1학년 5반', total: 17, 
-        types: { '지각': 17, '복장': 0, '화장': 0 },
-        details: [
-          { name: '권예은', count: 5, detail: '3.25/지, 3.26/지, 3.30/지, 4.2/지, 4.8/지' },
-          { name: '김예담', count: 4, detail: '3.16/지, 3.18/지, 3.23/지, 3.31/지' },
-          { name: '노안나', count: 4, detail: '4.2/지, 4.10/지, 4.14/지, 4.15/지' },
-          { name: '김하경', count: 1, detail: '3.24/지' },
-          { name: '박희원', count: 1, detail: '4.17/지' },
-          { name: '여채영', count: 1, detail: '4.10/지' },
-          { name: '이승희', count: 1, detail: '3.26/지' }
-        ]
-      },
-      { 
-        id: '1-6', name: '1학년 6반', total: 4, 
-        types: { '지각': 4, '복장': 0, '화장': 0 },
-        details: [
-          { name: '이루니', count: 2, detail: '3.17/지, 4.15/지' },
-          { name: '정윤지', count: 2, detail: '3.17/지, 3.31/지' }
-        ]
-      },
-      { 
-        id: '1-7', name: '1학년 7반', total: 3, 
-        types: { '지각': 3, '복장': 0, '화장': 0 },
-        details: [
-          { name: '강신영', count: 1, detail: '3.31/지' },
-          { name: '우다연', count: 2, detail: '3.27/지, 4.10/지' }
-        ]
-      },
-    ],
-    rankings: [
-      { name: '김서진', class: '1-2', count: 5, types: '복장(4), 지각(1)' },
-      { name: '권예은', class: '1-5', count: 5, types: '지각(5)' },
-      { name: '노안나', class: '1-5', count: 4, types: '지각(4)' },
-      { name: '김예담', class: '1-5', count: 4, types: '지각(4)' },
-      { name: '유지향', class: '1-2', count: 2, types: '지각(2)' },
-    ],
-    monthlyTrends: [
-      { name: '3월', count: 18 },
-      { name: '4월', count: 22 },
-    ]
-  };
-
-  const COLORS = ['#ef4444', '#f59e0b', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899', '#64748b'];
-
-  const totalViolations = useMemo(() => statsData.classes.reduce((acc, c) => acc + c.total, 0), []);
-  
-  const typeDistribution = useMemo(() => {
-    const dist = { '지각': 0, '복장': 0, '화장': 0 };
-    statsData.classes.forEach(c => {
-      dist['지각'] += c.types['지각'];
-      dist['복장'] += c.types['복장'];
-      dist['화장'] += c.types['화장'];
-    });
-    return Object.entries(dist).map(([name, value]) => ({ name, value }));
-  }, []);
-
-  const Card = ({ title, children, icon: Icon, color = "blue" }) => (
-    <div className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden`}>
-      <div className={`px-5 py-4 border-b border-gray-50 flex items-center gap-2`}>
-        {Icon && <Icon size={18} className={`text-${color}-500`} />}
-        <h3 className="font-bold text-gray-700">{title}</h3>
-      </div>
-      <div className="p-5">{children}</div>
-    </div>
-  );
-
-  const selectedClassData = useMemo(() => 
-    statsData.classes.find(c => c.id === selectedClass), 
-    [selectedClass]
-  );
-
-  return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8 font-sans">
-      <header className="max-w-6xl mx-auto mb-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2">
-              <FileText className="text-blue-600" />
-              2026학년도 1학기 교칙위반 통계 분석
-            </h1>
-            <p className="text-gray-500 mt-1">1학년 1반 ~ 7반 통합 장부 분석 결과</p>
-          </div>
-          <div className="flex gap-2">
-            <span className="bg-red-50 text-red-600 px-3 py-1 rounded-full text-sm font-semibold border border-red-100">
-              총 위반 건수: {totalViolations}건
-            </span>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-6xl mx-auto space-y-6">
-        <div className="flex border-b border-gray-200 gap-6 overflow-x-auto pb-px">
-          {[
-            { id: 'summary', label: '종합 통계', icon: LayoutDashboard },
-            { id: 'class', label: '학급별 현황', icon: Users },
-            { id: 'ranking', label: '집중 지도 대상', icon: AlertCircle },
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 py-3 px-1 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
-                activeTab === tab.id 
-                  ? 'border-blue-600 text-blue-600' 
-                  : 'border-transparent text-gray-400 hover:text-gray-600'
-              }`}
-            >
-              <tab.icon size={16} />
-              {tab.label}
+        <!-- Navigation Tabs -->
+        <nav class="flex border-b border-gray-200 gap-6 overflow-x-auto pb-px mb-6">
+            <button onclick="switchTab('summary')" id="tab-summary" class="tab-btn tab-active flex items-center gap-2 py-3 px-1 text-sm font-medium transition-colors whitespace-nowrap">
+                <i data-lucide="layout-dashboard" class="w-4 h-4"></i> 종합 통계
             </button>
-          ))}
+            <button onclick="switchTab('class')" id="tab-class" class="tab-btn text-gray-400 hover:text-gray-600 flex items-center gap-2 py-3 px-1 text-sm font-medium transition-colors whitespace-nowrap">
+                <i data-lucide="users" class="w-4 h-4"></i> 학급별 현황
+            </button>
+            <button onclick="switchTab('ranking')" id="tab-ranking" class="tab-btn text-gray-400 hover:text-gray-600 flex items-center gap-2 py-3 px-1 text-sm font-medium transition-colors whitespace-nowrap">
+                <i data-lucide="alert-circle" class="w-4 h-4"></i> 집중 지도 대상
+            </button>
+        </nav>
+
+        <!-- Content Area -->
+        <div id="content-summary" class="tab-content space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Chart Cards -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="font-bold text-gray-700 mb-4 flex items-center gap-2">
+                        <i data-lucide="bar-chart-3" class="text-indigo-500 w-4 h-4"></i> 학급별 위반 건수
+                    </h3>
+                    <div class="chart-container">
+                        <canvas id="classChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="font-bold text-gray-700 mb-4 flex items-center gap-2">
+                        <i data-lucide="pie-chart" class="text-amber-500 w-4 h-4"></i> 위반 항목 분포
+                    </h3>
+                    <div class="chart-container">
+                        <canvas id="typeChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="font-bold text-gray-700 mb-4 flex items-center gap-2">
+                        <i data-lucide="trending-up" class="text-emerald-500 w-4 h-4"></i> 월별 위반 추이
+                    </h3>
+                    <div class="chart-container">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Insight Box -->
+            <div class="bg-blue-600 rounded-xl p-6 text-white flex items-center justify-between">
+                <div>
+                    <h4 class="text-blue-100 font-medium italic">핵심 인사이트</h4>
+                    <p class="text-2xl font-bold mt-1">지각(지) 항목이 전체의 약 90%를 차지함</p>
+                    <p class="text-sm text-blue-200 mt-2">1학년 5반의 경우 특정 학생들의 반복 지각이 집중되고 있습니다.</p>
+                </div>
+                <div class="hidden sm:block opacity-20">
+                    <i data-lucide="calendar" class="w-20 h-20"></i>
+                </div>
+            </div>
         </div>
 
-        {activeTab === 'summary' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card title="학급별 위반 건수 비교" icon={BarChart} color="indigo">
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={statsData.classes}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="id" tick={{fontSize: 12}} />
-                    <YAxis tick={{fontSize: 12}} />
-                    <Tooltip />
-                    <Bar dataKey="total" name="위반 건수" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </Card>
+        <div id="content-class" class="tab-content hidden space-y-6">
+            <!-- Class Selector Buttons -->
+            <div id="class-selector" class="flex gap-2 flex-wrap">
+                <!-- JS handles buttons here -->
+            </div>
 
-            <Card title="위반 항목 분포" icon={AlertCircle} color="amber">
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={typeDistribution}
-                      innerRadius={60}
-                      outerRadius={80}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {typeDistribution.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </Card>
+            <!-- Class Detail Table Card -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="px-5 py-4 border-b border-gray-50 flex items-center gap-2">
+                    <i data-lucide="users" class="text-blue-500 w-5 h-5"></i>
+                    <h3 id="class-detail-title" class="font-bold text-gray-700">학급 상세 내역</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+                            <tr>
+                                <th class="px-6 py-3 font-semibold">이름</th>
+                                <th class="px-6 py-3 font-semibold text-center">총 위반</th>
+                                <th class="px-6 py-3 font-semibold">세부 항목 (날짜/유형)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="class-table-body" class="divide-y divide-gray-100">
+                            <!-- JS handles rows here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
-            <Card title="월별 위반 추이" icon={TrendingUp} color="emerald">
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={statsData.monthlyTrends}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="count" name="발생 건수" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </Card>
+        <div id="content-ranking" class="tab-content hidden space-y-6">
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl">
+                <div class="flex items-center gap-3">
+                    <i data-lucide="alert-circle" class="text-red-600"></i>
+                    <p class="text-red-800 text-sm font-medium">
+                        <strong>중점 관리 대상:</strong> 3회 이상 위반 기록이 있는 학생들에 대해 학부모 상담 또는 생활지도가 권고됩니다.
+                    </p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <div class="px-5 py-4 border-b border-gray-50 flex items-center gap-2">
+                        <i data-lucide="trending-up" class="text-red-500 w-5 h-5"></i>
+                        <h3 class="font-bold text-gray-700">위반 빈도 TOP 5 학생</h3>
+                    </div>
+                    <div id="student-ranking-list" class="p-5 space-y-4">
+                        <!-- JS handles items here -->
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <div class="px-5 py-4 border-b border-gray-50 flex items-center gap-2">
+                        <i data-lucide="users" class="text-orange-500 w-5 h-5"></i>
+                        <h3 class="font-bold text-gray-700">학급별 관리 지수</h3>
+                    </div>
+                    <div id="class-ranking-list" class="p-5 space-y-5">
+                        <!-- JS handles bars here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-12 pb-8 text-center text-gray-400 text-xs border-t border-gray-100 pt-8">
+            <p>© 2026 1학년 학생생활지도 위원회 | 본 자료는 교내 규정에 따라 대외비로 관리해 주시기 바랍니다.</p>
+        </footer>
+    </div>
+
+    <script>
+        // --- Data ---
+        const statsData = {
+            classes: [
+                { id: '1-1', name: '1학년 1반', total: 4, types: { '지각': 2, '화장': 1, '복장': 1 }, details: [
+                    { name: '김예원', count: 1, detail: '3.31/지' },
+                    { name: '김예주', count: 1, detail: '3.16/화' },
+                    { name: '백소연(부)', count: 1, detail: '4.9/지' },
+                    { name: '양윤정', count: 1, detail: '4.3/복' }
+                ]},
+                { id: '1-2', name: '1학년 2반', total: 11, types: { '지각': 5, '복장': 6, '화장': 0 }, details: [
+                    { name: '김민지', count: 1, detail: '4.7/복' },
+                    { name: '김서진', count: 5, detail: '3.19/복, 3.23/복, 3.26/지, 4.1/복, 4.7/복' },
+                    { name: '김은재', count: 1, detail: '3.25/지' },
+                    { name: '민하은', count: 1, detail: '3.26/지' },
+                    { name: '안채현(부)', count: 1, detail: '4.1/지' },
+                    { name: '유지향', count: 2, detail: '3.27/지, 3.31/지' }
+                ]},
+                { id: '1-3', name: '1학년 3반', total: 1, types: { '지각': 1, '복장': 0, '화장': 0 }, details: [
+                    { name: '최정원', count: 1, detail: '4.14/지' }
+                ]},
+                { id: '1-4', name: '1학년 4반', total: 0, types: { '지각': 0, '복장': 0, '화장': 0 }, details: [] },
+                { id: '1-5', name: '1학년 5반', total: 17, types: { '지각': 17, '복장': 0, '화장': 0 }, details: [
+                    { name: '권예은', count: 5, detail: '3.25/지, 3.26/지, 3.30/지, 4.2/지, 4.8/지' },
+                    { name: '김예담', count: 4, detail: '3.16/지, 3.18/지, 3.23/지, 3.31/지' },
+                    { name: '노안나', count: 4, detail: '4.2/지, 4.10/지, 4.14/지, 4.15/지' },
+                    { name: '김하경', count: 1, detail: '3.24/지' },
+                    { name: '박희원', count: 1, detail: '4.17/지' },
+                    { name: '여채영', count: 1, detail: '4.10/지' },
+                    { name: '이승희', count: 1, detail: '3.26/지' }
+                ]},
+                { id: '1-6', name: '1학년 6반', total: 4, types: { '지각': 4, '복장': 0, '화장': 0 }, details: [
+                    { name: '이루니', count: 2, detail: '3.17/지, 4.15/지' },
+                    { name: '정윤지', count: 2, detail: '3.17/지, 3.31/지' }
+                ]},
+                { id: '1-7', name: '1학년 7반', total: 3, types: { '지각': 3, '복장': 0, '화장': 0 }, details: [
+                    { name: '강신영', count: 1, detail: '3.31/지' },
+                    { name: '우다연', count: 2, detail: '3.27/지, 4.10/지' }
+                ]}
+            ],
+            rankings: [
+                { name: '김서진', class: '1-2', count: 5, types: '복장(4), 지각(1)' },
+                { name: '권예은', class: '1-5', count: 5, types: '지각(5)' },
+                { name: '노안나', class: '1-5', count: 4, types: '지각(4)' },
+                { name: '김예담', class: '1-5', count: 4, types: '지각(4)' },
+                { name: '유지향', class: '1-2', count: 2, types: '지각(2)' }
+            ],
+            monthlyTrends: [
+                { name: '3월', count: 18 },
+                { name: '4월', count: 22 }
+            ]
+        };
+
+        // --- State Management ---
+        let selectedClassId = '1-1';
+        let charts = {};
+
+        // --- Functions ---
+        function init() {
+            lucide.createIcons();
+            renderCharts();
+            renderClassSelector();
+            renderClassTable('1-1');
+            renderRankings();
             
-            <div className="lg:col-span-3 bg-blue-600 rounded-xl p-6 text-white flex items-center justify-between">
-              <div>
-                <h4 className="text-blue-100 font-medium">가장 위반이 많은 항목</h4>
-                <p className="text-3xl font-bold mt-1">지각 (총 36건)</p>
-                <p className="text-sm text-blue-200 mt-2">전체 위반의 약 90%가 지각에 집중되어 있습니다.</p>
-              </div>
-              <div className="hidden sm:block opacity-20">
-                <Calendar size={80} />
-              </div>
-            </div>
-          </div>
-        )}
+            // Total violations calculation
+            const total = statsData.classes.reduce((acc, c) => acc + c.total, 0);
+            document.getElementById('total-count-badge').innerText = `총 위반 건수: ${total}건`;
+        }
 
-        {activeTab === 'class' && (
-          <div className="space-y-6">
-            <div className="flex gap-2 flex-wrap">
-              {statsData.classes.map(c => (
-                <button
-                  key={c.id}
-                  onClick={() => setSelectedClass(c.id)}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                    selectedClass === c.id 
-                      ? 'bg-blue-600 text-white shadow-md' 
-                      : 'bg-white text-gray-600 border border-gray-200 hover:border-blue-300'
-                  }`}
-                >
-                  {c.name}
-                </button>
-              ))}
-            </div>
+        function switchTab(tabId) {
+            // Hide all content
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            // Show selected content
+            document.getElementById(`content-${tabId}`).classList.remove('hidden');
+            
+            // Update Tab Buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('tab-active');
+                btn.classList.add('text-gray-400');
+            });
+            const activeTab = document.getElementById(`tab-${tabId}`);
+            activeTab.classList.add('tab-active');
+            activeTab.classList.remove('text-gray-400');
 
-            <Card title={`${selectedClassData?.name || selectedClass} 위반 상세 내역`} icon={Users}>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left">
-                  <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
+            // Re-render charts if summary tab to fix sizing
+            if (tabId === 'summary') {
+                renderCharts();
+            }
+        }
+
+        function renderCharts() {
+            // Destroy existing charts if they exist to avoid memory leaks/overlap
+            Object.values(charts).forEach(c => c.destroy());
+
+            // 1. Class Chart (Bar)
+            charts.bar = new Chart(document.getElementById('classChart'), {
+                type: 'bar',
+                data: {
+                    labels: statsData.classes.map(c => c.id),
+                    datasets: [{
+                        label: '위반 건수',
+                        data: statsData.classes.map(c => c.total),
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 4
+                    }]
+                },
+                options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+            });
+
+            // 2. Type Chart (Pie)
+            const typeSums = statsData.classes.reduce((acc, c) => {
+                acc['지각'] += c.types['지각'];
+                acc['복장'] += c.types['복장'];
+                acc['화장'] += c.types['화장'];
+                return acc;
+            }, { '지각': 0, '복장': 0, '화장': 0 });
+
+            charts.pie = new Chart(document.getElementById('typeChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(typeSums),
+                    datasets: [{
+                        data: Object.values(typeSums),
+                        backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6']
+                    }]
+                },
+                options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+
+            // 3. Trend Chart (Line)
+            charts.line = new Chart(document.getElementById('trendChart'), {
+                type: 'line',
+                data: {
+                    labels: statsData.monthlyTrends.map(t => t.name),
+                    datasets: [{
+                        label: '발생 건수',
+                        data: statsData.monthlyTrends.map(t => t.count),
+                        borderColor: '#10b981',
+                        backgroundColor: '#10b981',
+                        tension: 0.3,
+                        fill: false,
+                        pointRadius: 5
+                    }]
+                },
+                options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+            });
+        }
+
+        function renderClassSelector() {
+            const container = document.getElementById('class-selector');
+            container.innerHTML = '';
+            
+            statsData.classes.forEach(c => {
+                const btn = document.createElement('button');
+                btn.className = `px-4 py-2 rounded-lg text-sm font-semibold transition-all class-btn ${c.id === selectedClassId ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:border-blue-300'}`;
+                btn.innerText = c.name;
+                btn.onclick = () => selectClass(c.id);
+                btn.id = `btn-${c.id}`;
+                container.appendChild(btn);
+            });
+        }
+
+        function selectClass(classId) {
+            selectedClassId = classId;
+            // Update UI buttons
+            document.querySelectorAll('.class-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
+                btn.classList.add('bg-white', 'text-gray-600', 'border-gray-200');
+            });
+            const activeBtn = document.getElementById(`btn-${classId}`);
+            activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow-md');
+            activeBtn.classList.remove('bg-white', 'text-gray-600', 'border-gray-200');
+
+            renderClassTable(classId);
+        }
+
+        function renderClassTable(classId) {
+            const classData = statsData.classes.find(c => c.id === classId);
+            const tbody = document.getElementById('class-table-body');
+            document.getElementById('class-detail-title').innerText = `${classData.name} 위반 상세 내역`;
+            
+            tbody.innerHTML = '';
+
+            if (classData.details.length === 0) {
+                tbody.innerHTML = `
                     <tr>
-                      <th className="px-4 py-3 font-semibold">이름</th>
-                      <th className="px-4 py-3 font-semibold text-center">총 위반</th>
-                      <th className="px-4 py-3 font-semibold">세부 항목 (날짜/유형)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {selectedClassData && selectedClassData.details.length > 0 ? (
-                      selectedClassData.details.map((item, i) => (
-                        <tr key={i} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-4 py-3 font-medium text-gray-900">{item.name}</td>
-                          <td className="px-4 py-3 text-center">
-                            <span className={`inline-block px-2 py-1 rounded text-xs font-bold ${item.count >= 3 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'}`}>
-                              {item.count}회
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-gray-500 italic">{item.detail}</td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="3" className="px-4 py-16 text-center">
-                          <div className="flex flex-col items-center gap-2 text-gray-400">
-                            <CheckCircle size={32} className="text-green-400" />
-                            <p>해당 학급은 위반 내역이 없습니다. (모범 학급)</p>
-                          </div>
+                        <td colspan="3" class="px-6 py-16 text-center">
+                            <div class="flex flex-col items-center gap-2 text-gray-400">
+                                <i data-lucide="check-circle" class="text-green-400 w-10 h-10"></i>
+                                <p>해당 학급은 위반 내역이 없습니다. (모범 학급)</p>
+                            </div>
                         </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </Card>
-          </div>
-        )}
+                    </tr>`;
+                lucide.createIcons();
+                return;
+            }
 
-        {activeTab === 'ranking' && (
-          <div className="space-y-6">
-            <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl">
-              <div className="flex items-center gap-3">
-                <AlertCircle className="text-red-600" />
-                <p className="text-red-800 text-sm font-medium">
-                  <strong>중점 관리 대상:</strong> 3회 이상 위반 기록이 있는 학생들에 대해 학부모 상담 또는 생활지도가 권고됩니다.
-                </p>
-              </div>
-            </div>
+            classData.details.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50 transition-colors';
+                const countClass = item.count >= 3 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600';
+                
+                tr.innerHTML = `
+                    <td class="px-6 py-4 font-medium text-gray-900">${item.name}</td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="inline-block px-2 py-1 rounded text-xs font-bold ${countClass}">
+                            ${item.count}회
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-gray-500 italic">${item.detail}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card title="위반 빈도 TOP 5 학생" icon={TrendingUp} color="red">
-                <div className="space-y-4">
-                  {statsData.rankings.map((student, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:shadow-sm transition-all">
-                      <div className="flex items-center gap-4">
-                        <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${i === 0 ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
-                          {i + 1}
+        function renderRankings() {
+            // Student Rankings
+            const studentList = document.getElementById('student-ranking-list');
+            studentList.innerHTML = statsData.rankings.map((s, i) => `
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:shadow-sm transition-all">
+                    <div class="flex items-center gap-4">
+                        <span class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${i === 0 ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-600'}">
+                            ${i + 1}
                         </span>
                         <div>
-                          <p className="font-bold text-gray-800">{student.name} ({student.class})</p>
-                          <p className="text-xs text-gray-500">{student.types}</p>
+                            <p class="font-bold text-gray-800">${s.name} (${s.class})</p>
+                            <p class="text-xs text-gray-500">${s.types}</p>
                         </div>
-                      </div>
-                      <span className="text-red-600 font-black text-lg">{student.count}회</span>
                     </div>
-                  ))}
+                    <span class="text-red-600 font-black text-lg">${s.count}회</span>
                 </div>
-              </Card>
+            `).join('');
 
-              <Card title="학급별 관리 강도" icon={Users} color="orange">
-                <div className="space-y-4">
-                  {statsData.classes
-                    .filter(c => c.total > 0)
-                    .sort((a, b) => b.total - a.total)
-                    .map((c, i) => (
-                      <div key={i} className="space-y-1">
-                        <div className="flex justify-between text-xs font-bold text-gray-600">
-                          <span>{c.name}</span>
-                          <span>{c.total}건</span>
-                        </div>
-                        <div className="w-full bg-gray-100 rounded-full h-2">
-                          <div 
-                            className="bg-orange-500 h-2 rounded-full" 
-                            style={{ width: `${(c.total / 17) * 100}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                  ))}
+            // Class Rankings
+            const classRankingList = document.getElementById('class-ranking-list');
+            const maxTotal = Math.max(...statsData.classes.map(c => c.total));
+            const sortedClasses = [...statsData.classes].sort((a, b) => b.total - a.total).filter(c => c.total > 0);
+            
+            classRankingList.innerHTML = sortedClasses.map(c => `
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs font-bold text-gray-600">
+                        <span>${c.name}</span>
+                        <span>${c.total}건</span>
+                    </div>
+                    <div class="w-full bg-gray-100 rounded-full h-2">
+                        <div class="bg-orange-500 h-2 rounded-full" style="width: ${(c.total / maxTotal) * 100}%"></div>
+                    </div>
                 </div>
-              </Card>
-            </div>
-          </div>
-        )}
-      </main>
+            `).join('');
+        }
 
-      <footer className="max-w-6xl mx-auto mt-12 pb-8 text-center text-gray-400 text-xs border-t border-gray-100 pt-8">
-        <p>© 2026 1학년 학생생활지도 위원회 | 본 자료는 교내 규정에 따라 대외비로 관리해 주시기 바랍니다.</p>
-      </footer>
-    </div>
-  );
-};
-
-export default App;
+        // --- Run on Load ---
+        window.onload = init;
+    </script>
+</body>
+</html>
